@@ -5,7 +5,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_team_lifecycle(client: AsyncClient):
     """E2E тест: создание команды, добавление пользователей, получение команды"""
-    # Создаем команду
+
     team_data = {
         "team_name": "backend",
         "members": [
@@ -20,7 +20,7 @@ async def test_team_lifecycle(client: AsyncClient):
     assert response.json()["team"]["team_name"] == "backend"
     assert len(response.json()["team"]["members"]) == 3
     
-    # Получаем команду
+
     response = await client.get("/team/get?team_name=backend")
     assert response.status_code == 200
     assert response.json()["team_name"] == "backend"
@@ -30,7 +30,7 @@ async def test_team_lifecycle(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_pr_creation_and_reviewers(client: AsyncClient):
     """E2E тест: создание PR с автоматическим назначением ревьюверов"""
-    # Создаем команду
+
     team_data = {
         "team_name": "frontend",
         "members": [
@@ -41,7 +41,7 @@ async def test_pr_creation_and_reviewers(client: AsyncClient):
     }
     await client.post("/team/add", json=team_data)
     
-    # Создаем PR
+
     pr_data = {
         "pull_request_id": "pr-1001",
         "pull_request_name": "Add feature",
@@ -60,7 +60,7 @@ async def test_pr_creation_and_reviewers(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_pr_merge(client: AsyncClient):
     """E2E тест: создание и merge PR"""
-    # Создаем команду
+
     team_data = {
         "team_name": "devops",
         "members": [
@@ -70,7 +70,7 @@ async def test_pr_merge(client: AsyncClient):
     }
     await client.post("/team/add", json=team_data)
     
-    # Создаем PR
+
     pr_data = {
         "pull_request_id": "pr-1002",
         "pull_request_name": "Fix bug",
@@ -78,13 +78,12 @@ async def test_pr_merge(client: AsyncClient):
     }
     await client.post("/pullRequest/create", json=pr_data)
     
-    # Merge PR
+
     merge_data = {"pull_request_id": "pr-1002"}
     response = await client.post("/pullRequest/merge", json=merge_data)
     assert response.status_code == 200
     assert response.json()["pr"]["status"] == "MERGED"
     
-    # Повторный merge (идемпотентность)
     response = await client.post("/pullRequest/merge", json=merge_data)
     assert response.status_code == 200
     assert response.json()["pr"]["status"] == "MERGED"
@@ -93,7 +92,7 @@ async def test_pr_merge(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_reviewer_reassignment(client: AsyncClient):
     """E2E тест: переназначение ревьювера"""
-    # Создаем команду
+
     team_data = {
         "team_name": "qa",
         "members": [
@@ -104,7 +103,6 @@ async def test_reviewer_reassignment(client: AsyncClient):
     }
     await client.post("/team/add", json=team_data)
     
-    # Создаем PR
     pr_data = {
         "pull_request_id": "pr-1003",
         "pull_request_name": "Test feature",
@@ -114,7 +112,6 @@ async def test_reviewer_reassignment(client: AsyncClient):
     old_reviewers = create_response.json()["pr"]["assigned_reviewers"]
     
     if old_reviewers:
-        # Переназначаем первого ревьювера
         reassign_data = {
             "pull_request_id": "pr-1003",
             "old_user_id": old_reviewers[0]
@@ -128,7 +125,7 @@ async def test_reviewer_reassignment(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_user_deactivation(client: AsyncClient):
     """E2E тест: деактивация пользователя"""
-    # Создаем команду
+
     team_data = {
         "team_name": "support",
         "members": [
@@ -138,7 +135,6 @@ async def test_user_deactivation(client: AsyncClient):
     }
     await client.post("/team/add", json=team_data)
     
-    # Деактивируем пользователя
     deactivate_data = {"user_id": "u12", "is_active": False}
     response = await client.post("/users/setIsActive", json=deactivate_data)
     assert response.status_code == 200
@@ -148,7 +144,7 @@ async def test_user_deactivation(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_get_user_reviews(client: AsyncClient):
     """E2E тест: получение PR'ов пользователя"""
-    # Создаем команду
+
     team_data = {
         "team_name": "design",
         "members": [
@@ -158,7 +154,6 @@ async def test_get_user_reviews(client: AsyncClient):
     }
     await client.post("/team/add", json=team_data)
     
-    # Создаем PR
     pr_data = {
         "pull_request_id": "pr-1004",
         "pull_request_name": "Design update",
@@ -166,16 +161,14 @@ async def test_get_user_reviews(client: AsyncClient):
     }
     await client.post("/pullRequest/create", json=pr_data)
     
-    # Получаем PR'ы ревьювера
     response = await client.get("/users/getReview?user_id=u15")
     assert response.status_code == 200
-    # u15 может быть или не быть ревьювером (до 2 ревьюверов назначаются)
 
 
 @pytest.mark.asyncio
 async def test_bulk_deactivate(client: AsyncClient):
     """E2E тест: массовая деактивация команды"""
-    # Создаем команду
+
     team_data = {
         "team_name": "marketing",
         "members": [
@@ -185,8 +178,7 @@ async def test_bulk_deactivate(client: AsyncClient):
         ]
     }
     await client.post("/team/add", json=team_data)
-    
-    # Создаем PR с ревьюверами
+
     pr_data = {
         "pull_request_id": "pr-1005",
         "pull_request_name": "Campaign",
@@ -194,26 +186,22 @@ async def test_bulk_deactivate(client: AsyncClient):
     }
     await client.post("/pullRequest/create", json=pr_data)
     
-    # Массовая деактивация
     deactivate_data = {"team_name": "marketing"}
     response = await client.post("/team/bulkDeactivate", json=deactivate_data)
     assert response.status_code == 200
     assert len(response.json()["deactivated_users"]) == 3
-    # Проверяем, что ревьюверы были переназначены (если были кандидаты)
 
 
 @pytest.mark.asyncio
 async def test_error_cases(client: AsyncClient):
     """E2E тест: обработка ошибок"""
-    # Команда не найдена
+
     response = await client.get("/team/get?team_name=nonexistent")
     assert response.status_code == 404
     
-    # PR не найден
     response = await client.post("/pullRequest/merge", json={"pull_request_id": "pr-9999"})
     assert response.status_code == 404
     
-    # Дублирование команды
     team_data = {
         "team_name": "duplicate",
         "members": [{"user_id": "u19", "username": "Sam", "is_active": True}]
@@ -222,7 +210,6 @@ async def test_error_cases(client: AsyncClient):
     response = await client.post("/team/add", json=team_data)
     assert response.status_code == 400
     
-    # Дублирование PR
     pr_data = {
         "pull_request_id": "pr-duplicate",
         "pull_request_name": "Test",
