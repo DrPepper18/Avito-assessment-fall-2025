@@ -32,56 +32,6 @@
 docker-compose up
 ```
 
-Сервис будет доступен на `http://localhost:8080`
-
-API документация доступна по адресу `http://localhost:8080/docs`
-
-## Структура проекта
-
-```
-.
-├── main.py                 # Точка входа приложения
-├── config.py              # Конфигурация (DATABASE_URL)
-├── schemas.py             # Pydantic схемы для валидации
-├── models/                # SQLAlchemy модели
-│   ├── models.py         # Модели данных
-│   └── database.py       # Настройка БД
-├── services/              # Бизнес-логика
-│   ├── users.py
-│   ├── teams.py
-│   └── pull_request.py
-├── routes/                # HTTP роутеры
-│   ├── users.py
-│   ├── teams.py
-│   └── pull_request.py
-├── tests/                 # Тесты
-│   ├── conftest.py       # Конфигурация pytest
-│   └── test_e2e.py      # E2E тесты
-├── locustfile.py         # Нагрузочное тестирование
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
-
-## API Endpoints
-
-### Teams
-
-- `POST /team/add` - Создать команду с участниками
-- `GET /team/get?team_name={name}` - Получить команду с участниками
-- `POST /team/bulkDeactivate` - Массовая деактивация пользователей команды
-
-### Users
-
-- `POST /users/setIsActive` - Установить флаг активности пользователя
-- `GET /users/getReview?user_id={id}` - Получить PR'ы, где пользователь назначен ревьювером
-
-### Pull Requests
-
-- `POST /pullRequest/create` - Создать PR и автоматически назначить ревьюверов
-- `POST /pullRequest/merge` - Пометить PR как MERGED
-- `POST /pullRequest/reassign` - Переназначить ревьювера
-
 ## Тестирование
 
 ### Интеграционные/E2E тесты
@@ -153,38 +103,9 @@ locust -f locustfile.py --host http://localhost:8080
    - Минимизация количества запросов к БД
    - Асинхронная обработка запросов
 
-### Обработка ошибок
-
-Все ошибки возвращаются в формате:
-```json
-{
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Error message"
-  }
-}
-```
-
-Возможные коды ошибок:
-- `NOT_FOUND` - ресурс не найден
-- `TEAM_EXISTS` - команда уже существует
-- `PR_EXISTS` - PR уже существует
-- `PR_MERGED` - нельзя изменять после merge
-- `NOT_ASSIGNED` - ревьювер не назначен на PR
-- `NO_CANDIDATE` - нет доступных кандидатов для замены
-
-## Конфигурация
-
 Переменные окружения:
 - `DATABASE_URL` - URL подключения к PostgreSQL (по умолчанию настраивается через docker-compose)
 - `TEST_DATABASE_URL` - URL тестовой БД (для тестов)
-
-## Производительность
-
-- Ожидаемый RPS: 5
-- SLI времени ответа: 300 мс
-- SLI успешности: 99.9%
-- Объем данных: до 20 команд, до 200 пользователей
 
 ## Разработка
 
@@ -207,7 +128,3 @@ TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/pr_revie
 ```bash
 python main.py
 ```
-
-## Лицензия
-
-Тестовое задание для стажёра Backend (осенняя волна 2025)
